@@ -1,0 +1,43 @@
+function [newMov] = getMeanVal(TimePoints, ImportedStack)
+%Pedro Falcon
+%01/12/17
+%This function will get the average of a predefined amount of frames in a 
+%GCaMP movie. Code derived from MATLAB script named "MovieAverage"
+ImportedStack=double(ImportedStack);
+lengthOfTime = TimePoints(3) - TimePoints(2) + 1;
+
+prompt1 = '\nIndicate the desired amount of frames that will be averaged: ';
+windowLength = input(prompt1);
+
+newMovieLength = lengthOfTime/windowLength; %Number of frames in new movie
+remainder = rem(lengthOfTime,windowLength); %Calculates remainder to check if frames of new movie should be rounded up
+
+if(remainder ~= 0) 
+    newMovieLength = ceil(newMovieLength); %If remainder is 0, the # of frames in new movie will be rounded up
+end
+    
+[nImage, mImage,~]=size(ImportedStack);
+newMov = zeros(nImage,mImage,newMovieLength); %Matrix that will hold new mean values
+frame = TimePoints(2); %Frame is initialized when ovulation begins.
+
+n=1; %Counter in for loop. Keeps track of frames in new movie.
+j = 1; %Will determine which frames to be considered for calculation of mean values. 
+
+for n=1:newMovieLength
+    newMov(:,:,n) = ImportedStack(:,:,frame);
+    for j=1:windowLength-1
+        if(frame ~= TimePoints(3)) %Checks to see if last frame is being read
+            newMov(:,:,n) = (newMov(:,:,n)+ImportedStack(:,:,frame+1));
+            frame = frame + 1;
+        elseif(frame == TimePoints(3) && remainder >0) %To check when there is uneven # of frames
+            windowLength = remainder;      
+        else
+            newMov(:,:,n) = (newMov(:,:,n) + ImportedStack(:,:,frame));
+            fprintf('f');
+            frame = frame + 1;
+        end
+    end
+    frame = frame + 1;
+    newMov(:,:,n) = newMov(:,:,n)/windowLength; %Gets average value
+end
+end
